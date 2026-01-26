@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
-
+from app.api import auth
 def create_app() -> FastAPI:
     app = FastAPI(
         title="Discord-like Chat Platform",
@@ -21,7 +21,8 @@ def create_app() -> FastAPI:
     @app.get("/health")
     def health_check():
         return {"status": "ok"}
-
+    
+    app.include_router(auth.router)
     return app
 
 
