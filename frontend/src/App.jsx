@@ -1,15 +1,24 @@
 import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
+import { Routes, Route, Navigate } from "react-router-dom";
 import './App.css'
 import 'tailwindcss'
+import Login from "./pages/Login";
+import Signup from "./pages/Signup";
+import Home from "./pages/Home";
+import ProtectedRoute from './routes/ProtectedRoute';
 function App() {
-  const [count, setCount] = useState(0)
 
   return (
-    <>
-      <h1 className='text-gray-700 dark:text-gray-400 '> Hello world</h1>
-    </>
+    <Routes>
+      <Route path='/login' element={<Login />}/>
+      <Route path='/signup' element={<Signup />}/>
+      <Route path='/' element={
+        <ProtectedRoute>
+          <Home />
+        </ProtectedRoute>
+      }/>
+      <Route path='*' element={<Navigate to='/'/>}/> 
+    </Routes>
   )
 }
 
