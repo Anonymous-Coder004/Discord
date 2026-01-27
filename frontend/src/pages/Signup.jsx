@@ -54,7 +54,7 @@ export default function Signup() {
         </h1>
 
         <p className="text-gray-400 text-sm mt-2">
-          Please sign in to continue
+          Please sign up to continue
         </p>
 
         {/* Username (same UI as Name field, only logic changed) */}
@@ -114,16 +114,6 @@ export default function Signup() {
             {error}
           </p>
         )}
-
-        <div className="mt-4 text-left">
-          <button
-            type="button"
-            className="text-sm text-indigo-400 hover:underline"
-          >
-            Forget password?
-          </button>
-        </div>
-
         <button
           type="submit"
           className="mt-2 w-full h-11 rounded-full text-white bg-indigo-600 hover:bg-indigo-500 transition"
