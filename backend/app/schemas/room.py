@@ -47,3 +47,23 @@ class RoomJoinRequest(BaseModel):
 class RoomJoinResponse(BaseModel):
     room_id: int
     status: str
+
+class RoomAccessRoom(BaseModel):
+    id: int
+    name: str
+    owner_id: int
+    has_llm: bool
+    llm_username: Optional[str]
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class RoomAccessResponse(BaseModel):
+    is_member: bool
+    room: RoomAccessRoom
+
+class RoomLeaveResponse(BaseModel):
+    room_id: int
+    status: str
