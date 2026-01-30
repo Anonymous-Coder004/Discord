@@ -27,7 +27,7 @@ const RoomListPanel = ({
             key={room.id}
             name={room.name}
             llmUsername={room.llm_username}
-            createdAtLabel={room.created_at_label}
+            createdAtLabel={room.created_at}
             selected={room.id === selectedRoomId}
             onClick={() => onRoomSelect(room.id)}
           />

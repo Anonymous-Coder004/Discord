@@ -2,9 +2,16 @@ import React from "react";
 import Button from "../Button";
 
 const Header = ({
+  onHome,
   onCreateRoom,
   onDeleteRoom,
+  onLeaveRoom,
   onLogout,
+
+  showHome = false,
+  showCreate = false,
+  showDelete = false,
+  showLeave = false,
   canDeleteRoom = false,
 }) => {
   return (
@@ -21,7 +28,6 @@ const Header = ({
       {/* Left: Logo */}
       <div className="flex items-center gap-3">
         <div className="w-9 h-9 flex items-center justify-center rounded-lg bg-indigo-600">
-          {/* Discord-like icon placeholder */}
           <span className="text-white font-bold text-lg">D</span>
         </div>
 
@@ -32,22 +38,46 @@ const Header = ({
 
       {/* Right: Actions */}
       <div className="flex items-center gap-3">
-        <Button
-          variant="primary"
-          className="px-6"
-          onClick={onCreateRoom}
-        >
-          Create Room
-        </Button>
+        {showHome && (
+          <Button
+            variant="ghost"
+            className="px-6"
+            onClick={onHome}
+          >
+            Home
+          </Button>
+        )}
 
-        <Button
-          variant="danger"
-          className="px-6"
-          disabled={!canDeleteRoom}
-          onClick={onDeleteRoom}
-        >
-          Delete Room
-        </Button>
+        {showCreate && (
+          <Button
+            variant="primary"
+            className="px-6"
+            onClick={onCreateRoom}
+          >
+            Create Room
+          </Button>
+        )}
+
+        {showLeave && (
+          <Button
+            variant="secondary"
+            className="px-6"
+            onClick={onLeaveRoom}
+          >
+            Leave Room
+          </Button>
+        )}
+
+        {showDelete && (
+          <Button
+            variant="danger"
+            className="px-6"
+            disabled={!canDeleteRoom}
+            onClick={onDeleteRoom}
+          >
+            Delete Room
+          </Button>
+        )}
 
         <Button
           variant="ghost"

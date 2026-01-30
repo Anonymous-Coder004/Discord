@@ -17,7 +17,7 @@ class TokenResponse(BaseModel):
 
     class Config:
         from_attributes=True
-
+ 
 
 class UserResponse(BaseModel):
     id: int

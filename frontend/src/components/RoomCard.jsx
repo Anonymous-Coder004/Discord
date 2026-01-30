@@ -1,5 +1,5 @@
 import React from "react";
-
+import { formatDate } from "../utils/formatDate";
 const RoomCard = ({
   name,
   llmUsername,
@@ -38,7 +38,7 @@ const RoomCard = ({
 
         {/* Right time */}
         <span className="text-white/40 text-xs whitespace-nowrap">
-          {createdAtLabel}
+          {formatDate(createdAtLabel)}
         </span>
       </div>
     </div>

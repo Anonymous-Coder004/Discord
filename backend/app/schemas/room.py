@@ -52,6 +52,7 @@ class RoomAccessRoom(BaseModel):
     id: int
     name: str
     owner_id: int
+    owner_username: str
     has_llm: bool
     llm_username: Optional[str]
     created_at: datetime

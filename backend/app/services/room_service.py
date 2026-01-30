@@ -197,6 +197,7 @@ def check_room_access_service(
         .first()
         is not None
     )
+    room.owner_username=room.owner.username
 
     # ── Return response ─────────────────────────
     return RoomAccessResponse(

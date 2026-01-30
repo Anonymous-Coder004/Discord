@@ -1,12 +1,19 @@
-import React from "react";
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Input from "./Input";
 import Button from "./Button";
 import { Lock } from "lucide-react";
+import { formatDate } from "../utils/formatDate";
+import roomApi from "../api/rooms";
 
-const RoomDetailPanel = ({
-  room = null,
-}) => {
-  // Empty state (no rooms at all)
+const RoomDetailPanel = ({ room = null }) => {
+  const navigate = useNavigate();
+
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  // Empty state (no room selected)
   if (!room) {
     return (
       <section className="flex-1 flex items-center justify-center">
@@ -16,6 +23,27 @@ const RoomDetailPanel = ({
       </section>
     );
   }
+
+  const handleJoinRoom = async () => {
+    try {
+      setLoading(true);
+      setError("");
+
+      await roomApi.joinRoom(room.id, {
+        password: password || null,
+      });
+
+      // ✅ redirect to chat page
+      navigate(`/rooms/${room.id}/Chat`);
+    } catch (err) {
+      console.error(err);
+      setError(
+        err.response?.data?.detail || "Failed to join room"
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <section className="flex-1 px-12 py-10 overflow-y-auto">
@@ -28,12 +56,12 @@ const RoomDetailPanel = ({
       <div className="mt-4 space-y-2 text-white/70">
         <p>
           <span className="text-white/50">Created At:</span>{" "}
-          {room.created_at_label}
+          {formatDate(room.created_at)}
         </p>
 
         <p>
           <span className="text-white/50">Owner:</span>{" "}
-          {room.owner_name}
+          {room.owner_username}
         </p>
       </div>
 
@@ -65,11 +93,22 @@ const RoomDetailPanel = ({
           type="password"
           placeholder="Enter Password"
           icon={Lock}
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
         />
 
+        {error && (
+          <p className="text-red-400 text-sm mt-3">
+            {error}
+          </p>
+        )}
+
         <div className="mt-4">
-          <Button>
-            Join Room
+          <Button
+            onClick={handleJoinRoom}
+            disabled={loading}
+          >
+            {loading ? "Joining..." : "Join Room"}
           </Button>
         </div>
       </div>

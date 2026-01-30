@@ -16,7 +16,7 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
-
+ 
     # Health check (important for deployment)
     @app.get("/health")
     def health_check():
