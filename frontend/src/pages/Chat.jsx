@@ -10,12 +10,14 @@ import ChatInput from "../components/chat/ChatInput";
 import useChatSocket from "../hooks/useChatSocket";
 import { useAuth } from "../context/AuthContext";
 import roomApi from "../api/rooms";
-
+import RoomDetailPanel from "../components/RoomDetailPanel";
 const Chat = () => {
   const { user, logout } = useAuth();
   const { roomId } = useParams();
   const [room, setRoom] = useState(null);
   const navigate = useNavigate();
+  const [selectedRoom, setSelectedRoom] = useState(null);
+  const [viewMode, setViewMode] = useState("CHAT"); 
 
   /* ───────────── ROOMS STATE (same as Home) ───────────── */
   const [rooms, setRooms] = useState([]);
@@ -71,11 +73,21 @@ const Chat = () => {
     logout();
   };
 
-  const handleRoomSelect = async (id) => {
-    if (Number(roomId) === id) return;
+  const handleRoomSelect = async (roomId) => {
+    try {
+      const res = await roomApi.checkAccess(roomId);
 
-    disconnect();
-    navigate(`/rooms/${id}/chat`);
+      if (res.is_member) {
+        navigate(`/rooms/${roomId}/Chat`);
+        setSelectedRoom(res.room);
+        setViewMode("CHAT");
+      } else {
+        setSelectedRoom(res.room);
+        setViewMode("JOIN");
+      }
+    } catch (err) {
+      console.error("Room access check failed", err);
+    }
   };
 
   const handledeleteRoom=async ()=>{
@@ -116,7 +128,7 @@ const Chat = () => {
         />
 
         {/* ───────── CHAT AREA ───────── */}
-        <div className="flex flex-col flex-1">
+        {viewMode==="CHAT" && <div className="flex flex-col flex-1">
           <ChatMessageList>
             {messages.map((msg, idx) => (
               <ChatMessage
@@ -128,7 +140,11 @@ const Chat = () => {
           </ChatMessageList>
 
           <ChatInput onSend={sendMessage} />
-        </div>
+        </div>}
+        {viewMode === "JOIN" && (
+          <RoomDetailPanel room={selectedRoom} />
+        )}
+        
       </div>
     </div>
   );
