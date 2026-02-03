@@ -97,7 +97,7 @@ def check_room_access(
     return check_room_access_service(
         db=db,
         room_id=room_id,
-        current_user=current_user,
+        user_id=current_user.id,
     )
 
 @router.delete(

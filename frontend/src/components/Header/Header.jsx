@@ -20,13 +20,13 @@ const Header = ({
         w-full h-16
         px-6
         flex items-center justify-between
-        bg-black/30
+        bg-black/40
         backdrop-blur-xl
         border-b border-white/10
       "
     >
-      {/* Left: Logo */}
-      <div className="flex items-center gap-3">
+      {/* Left: Logo + Home */}
+      <div className="flex items-center gap-4">
         <div className="w-9 h-9 flex items-center justify-center rounded-lg bg-indigo-600">
           <span className="text-white font-bold text-lg">D</span>
         </div>
@@ -34,24 +34,24 @@ const Header = ({
         <span className="text-white text-xl font-semibold tracking-wide">
           Discord
         </span>
-      </div>
 
-      {/* Right: Actions */}
-      <div className="flex items-center gap-3">
         {showHome && (
           <Button
             variant="ghost"
-            className="px-6"
+            className="ml-4 text-white/70 hover:text-white"
             onClick={onHome}
           >
             Home
           </Button>
         )}
+      </div>
 
+      {/* Right: Actions */}
+      <div className="flex items-center gap-3">
         {showCreate && (
           <Button
             variant="primary"
-            className="px-6"
+            className="px-5"
             onClick={onCreateRoom}
           >
             Create Room
@@ -60,8 +60,8 @@ const Header = ({
 
         {showLeave && (
           <Button
-            variant="secondary"
-            className="px-6"
+            variant="danger"
+            className="px-5"
             onClick={onLeaveRoom}
           >
             Leave Room
@@ -71,7 +71,7 @@ const Header = ({
         {showDelete && (
           <Button
             variant="danger"
-            className="px-6"
+            className="px-5"
             disabled={!canDeleteRoom}
             onClick={onDeleteRoom}
           >
@@ -79,9 +79,12 @@ const Header = ({
           </Button>
         )}
 
+        {/* subtle divider */}
+        <div className="w-px h-6 bg-white/10 mx-2" />
+
         <Button
           variant="ghost"
-          className="px-6"
+          className="text-white/60 hover:text-white"
           onClick={onLogout}
         >
           Logout

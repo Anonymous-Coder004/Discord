@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.api import auth,rooms
+from app.sockets.router import register_ws_routes
 def create_app() -> FastAPI:
     app = FastAPI(
         title="Discord-like Chat Platform",
@@ -24,7 +25,9 @@ def create_app() -> FastAPI:
     
     app.include_router(auth.router)
     app.include_router(rooms.router)
+    register_ws_routes(app)
     return app
 
 
 app = create_app()
+

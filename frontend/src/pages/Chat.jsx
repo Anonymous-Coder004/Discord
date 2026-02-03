@@ -1,38 +1,73 @@
 import React from "react";
-import { useParams, Navigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
+import Header from "../components/Header/Header";
+import RoomListPanel from "../components/RoomListPanel";
+import ChatMessage from "../components/chat/ChatMessage";
+import ChatMessageList from "../components/chat/ChatMessageList";
+import ChatInput from "../components/chat/ChatInput";
+import useChatSocket from "../hooks/useChatSocket";
 import { useAuth } from "../context/AuthContext";
 
 const Chat = () => {
-  const { user, loading } = useAuth();
+  const { user, logout } = useAuth();
   const { roomId } = useParams();
+  const navigate = useNavigate();
 
-  // Auth guard
-  if (loading) {
-    return (
-      <div className="h-screen flex items-center justify-center text-white">
-        Loading...
-      </div>
-    );
-  }
+  const { messages, sendMessage, disconnect } = useChatSocket({
+    roomId,
+    token: localStorage.getItem("access_token"),
+  });
 
-  if (!user) {
-    return <Navigate to="/login" replace />;
-  }
+  const handleLeaveRoom = () => {
+    disconnect();
+    navigate("/");
+  };
+
+  const handleLogout = () => {
+    disconnect();
+    logout();
+  };
 
   return (
-    <div className="h-screen flex items-center justify-center bg-gradient-to-br from-black via-slate-900 to-black">
-      <div className="text-center space-y-4">
-        <h1 className="text-white text-3xl font-semibold">
-          Chat Page
-        </h1>
+    <div className="h-screen flex flex-col bg-gradient-to-br from-black via-slate-900 to-black">
+      <Header
+        showHome
+        showCreate
+        showLeave
+        showDelete
+        onHome={() => {
+          disconnect();
+          navigate("/");
+        }}
+        onCreateRoom={() => navigate("/rooms/create")}
+        onLeaveRoom={handleLeaveRoom}
+        onDeleteRoom={() => alert("Delete later")}
+        onLogout={handleLogout}
+      />
 
-        <p className="text-white/70 text-lg">
-          Room ID: <span className="text-indigo-400">{roomId}</span>
-        </p>
+      <div className="flex flex-1 overflow-hidden">
+        <RoomListPanel
+          rooms={[]}
+          selectedRoomId={Number(roomId)}
+          onRoomSelect={(id) => {
+            disconnect();
+            navigate(`/rooms/${id}/chat`);
+          }}
+        />
 
-        <p className="text-white/40 text-sm">
-          (Temporary page – chat UI coming later)
-        </p>
+        <div className="flex flex-col flex-1">
+          <ChatMessageList>
+            {messages.map((msg, idx) => (
+              <ChatMessage
+                key={idx}
+                message={msg}
+                currentUserId={user.id}
+              />
+            ))}
+          </ChatMessageList>
+
+          <ChatInput onSend={sendMessage} />
+        </div>
       </div>
     </div>
   );

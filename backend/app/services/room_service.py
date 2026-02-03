@@ -6,6 +6,7 @@ from app.schemas.room import RoomCreate,RoomAccessResponse
 from app.models.users import User
 from app.core.security import hash_password,verify_password
 from app.models.room_members import RoomMember
+from app.models.messages import Message
 
 def create_room_service(
     *,
@@ -171,7 +172,7 @@ def check_room_access_service(
     *,
     db: Session,
     room_id: int,
-    current_user,
+    user_id: int
 ) -> RoomAccessResponse:
     """
     Check whether the current user is a member of the room
@@ -192,7 +193,7 @@ def check_room_access_service(
         db.query(RoomMember)
         .filter(
             RoomMember.room_id == room_id,
-            RoomMember.user_id == current_user.id,
+            RoomMember.user_id == user_id,
         )
         .first()
         is not None
@@ -232,3 +233,4 @@ def leave_room_service(
 
     db.delete(member)
     db.commit()
+
