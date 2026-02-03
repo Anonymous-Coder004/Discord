@@ -1,31 +1,92 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+
 import Header from "../components/Header/Header";
 import RoomListPanel from "../components/RoomListPanel";
 import ChatMessage from "../components/chat/ChatMessage";
 import ChatMessageList from "../components/chat/ChatMessageList";
 import ChatInput from "../components/chat/ChatInput";
+
 import useChatSocket from "../hooks/useChatSocket";
 import { useAuth } from "../context/AuthContext";
+import roomApi from "../api/rooms";
 
 const Chat = () => {
   const { user, logout } = useAuth();
   const { roomId } = useParams();
+  const [room, setRoom] = useState(null);
   const navigate = useNavigate();
 
+  /* ───────────── ROOMS STATE (same as Home) ───────────── */
+  const [rooms, setRooms] = useState([]);
+
+  /* ───────────── FETCH ROOMS ───────────── */
+  useEffect(() => {
+    const fetchRooms = async () => {
+      try {
+        const data = await roomApi.listRooms();
+        setRooms(data);
+      } catch (err) {
+        console.error("Failed to fetch rooms", err);
+      }
+    };
+
+    fetchRooms();
+  }, []);
+
+  useEffect(() => {
+    const fetchRoom = async () => {
+      try {
+        const res = await roomApi.checkAccess(roomId);
+        setRoom(res.room);
+      } catch (err) {
+        console.error("Failed to fetch room", err);
+      }
+    };
+
+    fetchRoom();
+  }, [roomId]);
+
+  /* ───────────── CHAT SOCKET ───────────── */
   const { messages, sendMessage, disconnect } = useChatSocket({
     roomId,
     token: localStorage.getItem("access_token"),
   });
 
-  const handleLeaveRoom = () => {
-    disconnect();
-    navigate("/");
+  /* ───────────── ACTIONS ───────────── */
+  const handleLeaveRoom = async () => {
+    try {
+      await roomApi.leaveRoom(roomId);
+    } catch (err) {
+      console.error("Failed to leave room", err);
+    } finally {
+      disconnect();                    
+      navigate("/");                  
+    }
   };
+
 
   const handleLogout = () => {
     disconnect();
     logout();
+  };
+
+  const handleRoomSelect = async (id) => {
+    if (Number(roomId) === id) return;
+
+    disconnect();
+    navigate(`/rooms/${id}/chat`);
+  };
+
+  const handledeleteRoom=async ()=>{
+    try {
+      await roomApi.deleteRoom(roomId);
+    } catch (err) {
+      console.error("Failed to delete room", err);
+    } finally {
+      disconnect();                    
+      navigate("/");                  
+    }
   };
 
   return (
@@ -34,32 +95,32 @@ const Chat = () => {
         showHome
         showCreate
         showLeave
-        showDelete
+        showDelete={room&&room.owner_id===user.id}
         onHome={() => {
           disconnect();
           navigate("/");
         }}
         onCreateRoom={() => navigate("/rooms/create")}
         onLeaveRoom={handleLeaveRoom}
-        onDeleteRoom={() => alert("Delete later")}
+        onDeleteRoom={handledeleteRoom}
         onLogout={handleLogout}
+        canDeleteRoom={room&&room.owner_id===user.id}
       />
 
       <div className="flex flex-1 overflow-hidden">
+        {/* ───────── LEFT PANEL (same pattern as Home) ───────── */}
         <RoomListPanel
-          rooms={[]}
+          rooms={rooms}
           selectedRoomId={Number(roomId)}
-          onRoomSelect={(id) => {
-            disconnect();
-            navigate(`/rooms/${id}/chat`);
-          }}
+          onRoomSelect={handleRoomSelect}
         />
 
+        {/* ───────── CHAT AREA ───────── */}
         <div className="flex flex-col flex-1">
           <ChatMessageList>
             {messages.map((msg, idx) => (
               <ChatMessage
-                key={idx}
+                key={msg.id ?? idx}
                 message={msg}
                 currentUserId={user.id}
               />

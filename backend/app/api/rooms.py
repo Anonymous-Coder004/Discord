@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, status,BackgroundTasks
 from sqlalchemy.orm import Session
 from app.db.session import get_db
 from app.schemas.room import RoomCreate, RoomResponse,RoomDetailResponse,RoomListResponse,RoomJoinResponse,RoomJoinRequest,RoomAccessResponse,RoomLeaveResponse
@@ -71,13 +71,16 @@ def join_room(
 )
 def delete_room(
     room_id: int,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
+    
 ):
     delete_room_service(
         db=db,
         room_id=room_id,
         current_user=current_user,
+        background_tasks=background_tasks
     )
 
 @router.get(
@@ -114,7 +117,7 @@ def leave_room(
         db=db,
         room_id=room_id,
         current_user=current_user,
-    )
+    ) 
 
     return {
         "room_id": room_id,

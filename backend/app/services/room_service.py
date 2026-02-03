@@ -7,6 +7,8 @@ from app.models.users import User
 from app.core.security import hash_password,verify_password
 from app.models.room_members import RoomMember
 from app.models.messages import Message
+from app.sockets.manager import manager
+import asyncio
 
 def create_room_service(
     *,
@@ -145,6 +147,7 @@ def delete_room_service(
     db: Session,
     room_id: int,
     current_user: User,
+    background_tasks
 ) -> None:
     """
     Delete a room.
@@ -164,6 +167,22 @@ def delete_room_service(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only the room owner can delete this room",
         )
+    background_tasks.add_task(
+        manager.broadcast,
+        room_id,
+        {
+            "type": "system",
+            "action": "room_deleted",
+            "room_id": room_id,
+            "message": "Room was deleted by owner",
+        },
+    )
+
+    background_tasks.add_task(
+        manager.disconnect_room,
+        room_id,
+    )
+
 
     db.delete(room)
     db.commit()

@@ -15,6 +15,9 @@ from datetime import datetime
 from app.models.messages import Message
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
+from app.db.session import SessionLocal
+from app.models.messages import Message
+from app.models.rooms import Room
 logger = logging.getLogger(__name__)
 
 
@@ -29,11 +32,13 @@ def save_message_best_effort(
     reply_to_message_id: int | None = None,
 ):
     try:
-        from app.db.session import SessionLocal
-        from app.models.messages import Message
-
         session = SessionLocal()
         try:
+            room_exists=(
+                session.query(Room.id).filter(Room.id==room_id).first()
+            )
+            if not room_exists:
+                return None
             msg = Message(
                 room_id=room_id,
                 sender_type=sender_type,

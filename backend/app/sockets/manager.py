@@ -99,6 +99,17 @@ class ConnectionManager:
 
     def get_room_user_ids(self, room_id: int) -> List[int]:
         return [c["user_id"] for c in self._rooms.get(room_id, [])]
+    
+    async def disconnect_room(self,room_id:int):
+        async with self._lock:
+            conns=self._rooms.pop(room_id,[])
+        for c in conns:
+            ws=c["websocket"]
+            try:
+                await ws.close(code=4000)
+            except Exception:
+                pass
+        logger.info("All connections closed for room %s",room_id)
 
 
 manager = ConnectionManager()

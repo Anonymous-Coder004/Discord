@@ -71,7 +71,11 @@ class Message(Base):
     )
 
     # ───────────── Relationships ─────────────
-    room = relationship("Room", backref="messages")
+    room = relationship(
+        "Room",
+        back_populates="messages",
+    )
+
     sender_user = relationship("User", foreign_keys=[sender_user_id])
     replied_message = relationship("Message", remote_side=[id])
 

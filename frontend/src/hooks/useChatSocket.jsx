@@ -21,11 +21,17 @@ export default function useChatSocket({ roomId, token }) {
     socket.onmessage = (event) => {
       try {
         const payload = JSON.parse(event.data);
+        if (payload.type === "system" && payload.action === "room_deleted") {
+          alert("Room was deleted by owner");
+          socket.close();
+          window.location.href = "/";
+          return;
+        }
+
         setMessages((prev) => [...prev, payload]);
-      } catch (err) {
-        console.warn("Invalid WS payload", err);
-      }
+      } catch {}
     };
+
 
     socket.onerror = (err) => {
       console.warn("WS error", err);

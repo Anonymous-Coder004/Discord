@@ -88,6 +88,14 @@ const roomApi = {
   async deleteRoom(roomId) {
     await roomClient.delete(`/rooms/${roomId}`);
   },
+
+  /**
+   * Leave a room
+   * DELETE /rooms/{room_id}/leave
+   */
+  async leaveRoom(roomId){
+    await roomClient.delete(`/rooms/${roomId}/leave`)
+  },
 };
 
 export default roomApi;

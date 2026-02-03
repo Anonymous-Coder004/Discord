@@ -64,3 +64,10 @@ class Room(Base):
         backref="owned_rooms",
         lazy="joined"
     )
+    messages = relationship(
+        "Message",
+        back_populates="room",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
+
