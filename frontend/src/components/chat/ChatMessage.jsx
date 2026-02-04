@@ -1,10 +1,14 @@
 import MessageOther from "./MessageOther";
 import MessageSelf from "./MessageSelf";
 import MessageSystem from "./MessageSystem";
-
+import MessageLLM from "./MesssageLLM";
 const ChatMessage = ({ message, currentUserId }) => {
   if (message.sender_type === "system") {
     return <MessageSystem message={message} />;
+  }
+
+  if (message.sender_type === "llm") {
+    return <MessageLLM message={message} />;
   }
 
   if (message.sender_user_id === currentUserId) {

@@ -33,4 +33,3 @@ class HistoryMessagePayload(BaseSocketMessage):
     sender_username: Optional[str]
     content: str
     message_type: str
-    reply_to_message_id: Optional[int]

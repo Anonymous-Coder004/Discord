@@ -54,15 +54,7 @@ class Message(Base):
         String(20),
         nullable=False,
     )
-    # 'normal' | 'reply' | 'llm_invoke' | 'llm_response' | 'system'
-
-    # ───────────── Reply Metadata ─────────────
-    reply_to_message_id = Column(
-        BigInteger,
-        ForeignKey("messages.id", ondelete="SET NULL"),
-        nullable=True,
-    )
-
+    # 'normal' | 'llm_invoke' | 'llm_response' | 'system'
     # ───────────── Timestamp ─────────────
     created_at = Column(
         TIMESTAMP(timezone=True),
@@ -75,9 +67,7 @@ class Message(Base):
         "Room",
         back_populates="messages",
     )
-
     sender_user = relationship("User", foreign_keys=[sender_user_id])
-    replied_message = relationship("Message", remote_side=[id])
 
     # ───────────── Constraints ─────────────
     __table_args__ = (

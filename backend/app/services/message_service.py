@@ -29,7 +29,6 @@ def save_message_best_effort(
     content: str,
     message_type: str,
     timestamp: datetime,
-    reply_to_message_id: int | None = None,
 ):
     try:
         session = SessionLocal()
@@ -45,7 +44,6 @@ def save_message_best_effort(
                 sender_user_id=sender_user_id,
                 content=content,
                 message_type=message_type,
-                reply_to_message_id=reply_to_message_id,
                 created_at=timestamp,
             )
             session.add(msg)
@@ -77,3 +75,32 @@ def fetch_recent_messages(
 
     # reverse so client receives chronological order
     return list(reversed(msgs))
+
+def detect_llm_invoke(
+    db: Session,
+    *,
+    room_id: int,
+    text: str,
+) -> bool:
+    if not text:
+        return False
+
+    tokens = text.strip().split()
+    if not tokens:
+        return False
+
+    room = (
+        db.query(Room)
+        .filter(Room.id == room_id)
+        .first()
+    )
+    if not room or not room.llm_username:
+        return False
+
+    for token in tokens:
+        if token.startswith("@") and token[1:] == room.llm_username:
+            return True
+
+    return False
+
+

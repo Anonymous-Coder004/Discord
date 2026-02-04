@@ -14,7 +14,7 @@ from app.schemas.socket import HistoryMessagePayload
 from app.sockets.manager import manager
 from app.sockets.auth import get_user_id_from_ws
 from app.models.users import User
-
+from app.services.message_service import detect_llm_invoke
 logger = logging.getLogger(__name__)
 
 
@@ -80,7 +80,6 @@ async def handle_websocket_connection(websocket: WebSocket, room_id: int):
                 ),
                 content=msg.content,
                 message_type=msg.message_type,
-                reply_to_message_id=msg.reply_to_message_id,
                 created_at=msg.created_at,
             )
             await manager.send_personal(websocket, payload.model_dump())
@@ -107,7 +106,6 @@ async def handle_websocket_connection(websocket: WebSocket, room_id: int):
             sender_username=None,
             content=join_msg.content,
             message_type="system",
-            reply_to_message_id=None,
             created_at=join_msg.created_at,
         ).model_dump(),
     )
@@ -125,12 +123,20 @@ async def handle_websocket_connection(websocket: WebSocket, room_id: int):
             if not text:
                 continue
 
+            # ask service layer whether this is an llm invoke
+            db = SessionLocal()
+            try:
+                is_llm_invoke = detect_llm_invoke(db, room_id=room_id, text=text)
+            finally:
+                db.close()
+
+            message_type = "llm_invoke" if is_llm_invoke else "normal"
             msg = save_message_best_effort(
                 room_id=room_id,
                 sender_type="user",
                 sender_user_id=user_id,
                 content=text,
-                message_type="normal",
+                message_type=message_type,
                 timestamp=datetime.now(timezone.utc),
             )
 
@@ -143,11 +149,35 @@ async def handle_websocket_connection(websocket: WebSocket, room_id: int):
                     sender_user_id=user_id,
                     sender_username=username,
                     content=msg.content,
-                    message_type="normal",
-                    reply_to_message_id=None,
+                    message_type=msg.message_type,
                     created_at=msg.created_at,
                 ).model_dump(),
             )
+
+            if is_llm_invoke:
+                bot_msg = save_message_best_effort(
+                    room_id=room_id,
+                    sender_type="llm",
+                    sender_user_id=None,
+                    content="🤖 Bot is active. LLM integration coming soon.",
+                    message_type="llm_response",
+                    timestamp=datetime.now(timezone.utc),
+                )
+
+                await manager.broadcast(
+                    room_id,
+                    HistoryMessagePayload(
+                        id=bot_msg.id,
+                        room_id=bot_msg.room_id,
+                        sender_type="llm",
+                        sender_user_id=None,
+                        sender_username=None,
+                        content=bot_msg.content,
+                        message_type="llm_response",
+                        created_at=bot_msg.created_at,
+                    ).model_dump(),
+                )
+
 
     except WebSocketDisconnect:
         logger.info("User %s disconnected from room %s", user_id, room_id)
@@ -175,7 +205,6 @@ async def handle_websocket_connection(websocket: WebSocket, room_id: int):
                 sender_username=None,
                 content=leave_msg.content,
                 message_type="system",
-                reply_to_message_id=None,
                 created_at=leave_msg.created_at,
             ).model_dump(),
         )
