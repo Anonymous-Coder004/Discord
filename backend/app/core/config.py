@@ -9,7 +9,7 @@ class Settings(BaseSettings): #pydantic model for env variable
     secret_key:str
     algorithm:str
     access_token_expire_minutes:int
-
+    google_api_key:str
     class Config:
         env_file=".env"
     

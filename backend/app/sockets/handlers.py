@@ -15,6 +15,7 @@ from app.sockets.manager import manager
 from app.sockets.auth import get_user_id_from_ws
 from app.models.users import User
 from app.services.message_service import detect_llm_invoke
+from app.services.llm_service import handle_llm_request
 logger = logging.getLogger(__name__)
 
 
@@ -147,7 +148,7 @@ async def handle_websocket_connection(websocket: WebSocket, room_id: int):
                     room_id=msg.room_id,
                     sender_type="user",
                     sender_user_id=user_id,
-                    sender_username=username,
+                    sender_username=username, 
                     content=msg.content,
                     message_type=msg.message_type,
                     created_at=msg.created_at,
@@ -155,28 +156,40 @@ async def handle_websocket_connection(websocket: WebSocket, room_id: int):
             )
 
             if is_llm_invoke:
+                try:
+                    llm_response_text = await handle_llm_request(
+                        room_id=room_id,
+                        user_id=user_id,
+                        text=text,
+                    )
+                except Exception:
+                    logger.exception("LLM invocation failed")
+                    llm_response_text = "⚠️ LLM error. Please try again."
+
                 bot_msg = save_message_best_effort(
                     room_id=room_id,
                     sender_type="llm",
                     sender_user_id=None,
-                    content="🤖 Bot is active. LLM integration coming soon.",
+                    content=llm_response_text,
                     message_type="llm_response",
                     timestamp=datetime.now(timezone.utc),
                 )
+                if bot_msg:
+                    await manager.broadcast(
+                        room_id,
+                        HistoryMessagePayload(
+                            id=bot_msg.id,
+                            room_id=bot_msg.room_id,
+                            sender_type="llm",
+                            sender_user_id=None,
+                            sender_username=None,
+                            content=bot_msg.content,
+                            message_type="llm_response",
+                            reply_to_message_id=None,
+                            created_at=bot_msg.created_at,
+                        ).model_dump(),
+                    )
 
-                await manager.broadcast(
-                    room_id,
-                    HistoryMessagePayload(
-                        id=bot_msg.id,
-                        room_id=bot_msg.room_id,
-                        sender_type="llm",
-                        sender_user_id=None,
-                        sender_username=None,
-                        content=bot_msg.content,
-                        message_type="llm_response",
-                        created_at=bot_msg.created_at,
-                    ).model_dump(),
-                )
 
 
     except WebSocketDisconnect:
