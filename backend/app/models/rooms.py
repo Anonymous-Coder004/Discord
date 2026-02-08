@@ -10,6 +10,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import text
 from datetime import datetime
 from app.db.base import Base
+from typing import Optional
 class Room(Base):
     __tablename__ = "rooms"
     id: Mapped[int] = mapped_column(
@@ -70,4 +71,11 @@ class Room(Base):
         cascade="all, delete-orphan",
         passive_deletes=True,
     )
+    memory: Mapped[Optional["RoomMemory"]] = relationship(
+        "RoomMemory",
+        back_populates="room",
+        uselist=False,
+        cascade="all, delete-orphan",
+    )
+
 

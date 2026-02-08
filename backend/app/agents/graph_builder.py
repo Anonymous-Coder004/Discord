@@ -1,14 +1,14 @@
-# app/agents/graph_builder.py
-
 from langgraph.graph import StateGraph, START, END
-from .state import LLMState
-from .nodes import llm_qa
+from .state import ChatState
+from .nodes import chat_node
+
 
 def build_graph():
-    graph = StateGraph(LLMState)
+    builder = StateGraph(ChatState)
 
-    graph.add_node("llm_qa", llm_qa)
-    graph.add_edge(START, "llm_qa")
-    graph.add_edge("llm_qa", END)
+    builder.add_node("chat", chat_node)
 
-    return graph.compile()
+    builder.add_edge(START, "chat")
+    builder.add_edge("chat", END)
+
+    return builder.compile()

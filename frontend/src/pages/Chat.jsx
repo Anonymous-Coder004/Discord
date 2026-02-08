@@ -18,7 +18,6 @@ const Chat = () => {
   const navigate = useNavigate();
   const [selectedRoom, setSelectedRoom] = useState(null);
   const [viewMode, setViewMode] = useState("CHAT"); 
-
   /* ───────────── ROOMS STATE (same as Home) ───────────── */
   const [rooms, setRooms] = useState([]);
 

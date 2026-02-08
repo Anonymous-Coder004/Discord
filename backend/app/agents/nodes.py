@@ -1,16 +1,16 @@
-# app/agents/nodes.py
-
-from .state import LLMState
 from .llm_connection import get_llm_model
-
+from .state import ChatState
 model = get_llm_model()
 
-async def llm_qa(state: LLMState) -> LLMState:
-    prompt = f"Answer the following question: {state.ques}"
 
-    result = await model.ainvoke(prompt)
-
-    return LLMState(
-        ques=state.ques,
-        ans= result.content,
-    )
+async def chat_node(state: ChatState):
+    response = await model.ainvoke(state.messages)
+ 
+    return {
+        "messages": state.messages + [
+            {
+                "role": "assistant",
+                "content": response.content,
+            }
+        ]
+    }

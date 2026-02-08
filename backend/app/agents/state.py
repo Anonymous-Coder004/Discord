@@ -1,8 +1,6 @@
-# app/agents/state.py
-
 from pydantic import BaseModel
+from typing import List, Dict, Any
 
 
-class LLMState(BaseModel):
-    ques: str
-    ans: str = ""
+class ChatState(BaseModel):
+    messages: List[Dict[str, Any]]
