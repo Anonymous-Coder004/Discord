@@ -1,11 +1,24 @@
-# test_llm.py
+# app/utils/github_test.py
 
-from app.services.llm_service import handle_llm_request
+from langchain_community.utilities.github import GitHubAPIWrapper
+from core.config import settings
 
-result = handle_llm_request(
-    room_id=1,
-    user_id=1,
-    text="Explain LangGraph in simple terms."
-)
+with open(settings.github_app_private_key_path, "r") as f:
+    private_key = f.read()
 
-print(result)
+def read_main_file():
+    github = GitHubAPIWrapper(
+        github_app_id=settings.github_app_id,
+        github_app_private_key=private_key,
+        github_repository=settings.github_repository,
+    )
+
+    content = github.read_file("backend/app/main.py")
+
+    print("----- FILE CONTENT START -----")
+    print(content)
+    print("----- FILE CONTENT END -----")
+
+    return content
+
+read_main_file()

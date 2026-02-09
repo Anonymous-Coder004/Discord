@@ -1,6 +1,5 @@
-from pydantic import BaseModel
-from typing import List, Dict, Any
-
-
-class ChatState(BaseModel):
-    messages: List[Dict[str, Any]]
+from langgraph.graph.message import add_messages
+from typing import TypedDict, Annotated
+from langchain_core.messages import BaseMessage
+class ChatState(TypedDict):
+    messages: Annotated[list[BaseMessage], add_messages]

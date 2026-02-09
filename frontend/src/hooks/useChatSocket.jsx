@@ -17,7 +17,7 @@ export default function useChatSocket({ roomId, token }) {
     socket.onopen = () => {
       console.log("WS connected");
     };
-
+ 
     socket.onmessage = (event) => {
       try {
         const payload = JSON.parse(event.data);

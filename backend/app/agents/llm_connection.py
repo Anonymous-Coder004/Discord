@@ -5,6 +5,6 @@ from app.core.config import settings
 
 def get_llm_model():
     return ChatGoogleGenerativeAI(
-        model="gemini-2.5-flash",
+        model="gemini-2.5-flash-lite",
         google_api_key=settings.google_api_key
     )

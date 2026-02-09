@@ -162,6 +162,9 @@ async def handle_websocket_connection(websocket: WebSocket, room_id: int):
                         user_id=user_id,
                         text=text,
                     )
+                    if not llm_response_text:
+                        llm_response_text = "⚠️ Empty response."
+
                 except Exception:
                     logger.exception("LLM invocation failed")
                     llm_response_text = "⚠️ LLM error. Please try again."

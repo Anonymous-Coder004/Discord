@@ -12,7 +12,7 @@ from app.agents.prompts.chat_prompts import system_chat_prompt
 from app.agents.prompts.summary_prompts import summarize_prompt
 import asyncio
 from collections import defaultdict
-
+from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 room_locks = defaultdict(asyncio.Lock)
 
 
@@ -47,7 +47,6 @@ def fetch_last_messages_for_memory(
 
     return list(reversed(msgs))
 
-
 def build_conversation_context(
     summary: str,
     messages: list,
@@ -55,37 +54,34 @@ def build_conversation_context(
     conversation = []
 
     # Base system prompt
-    conversation.append({
-        "role": "system",
-        "content": system_chat_prompt(),
-    })
+    conversation.append(
+        SystemMessage(content=system_chat_prompt())
+    )
 
     # Add rolling summary
     if summary:
-        conversation.append({
-            "role": "system",
-            "content": f"Conversation summary:\n{summary}",
-        })
+        conversation.append(
+            SystemMessage(
+                content=f"Conversation summary:\n{summary}"
+            )
+        )
 
     # Add past messages with identity tagging
     for msg in messages:
         if msg.sender_type == "llm":
-            conversation.append({
-                "role": "assistant",
-                "content": msg.content,
-            })
+            conversation.append(
+                AIMessage(content=msg.content)
+            )
         else:
-            # msg.sender_user must exist for user messages
             username = msg.sender_user.username if msg.sender_user else "Unknown"
 
-            conversation.append({
-                "role": "user",
-                "content": f"User({username}): {msg.content}",
-            })
+            conversation.append(
+                HumanMessage(
+                    content=f"User({username}): {msg.content}"
+                )
+            )
 
     return conversation
-
-
 
 async def generate_new_summary(
     previous_summary: str,
@@ -95,25 +91,29 @@ async def generate_new_summary(
     convo = []
 
     # Summary instruction
-    convo.append({
-        "role": "system",
-        "content": summarize_prompt(previous_summary),
-    })
+    convo.append(
+        SystemMessage(content=summarize_prompt(previous_summary))
+    )
 
     # Add recent conversation
     for msg in recent_messages:
-        role = "assistant" if msg.sender_type == "llm" else "user"
-        convo.append({
-            "role": role,
-            "content": msg.content,
-        })
+        if msg.sender_type == "llm":
+            convo.append(
+                AIMessage(content=msg.content)
+            )
+        else:
+            convo.append(
+                HumanMessage(content=msg.content)
+            )
 
-    convo.append({
-        "role": "user",
-        "content": "Provide a concise updated summary of this conversation.",
-    })
+    convo.append(
+        HumanMessage(
+            content="Provide a concise updated summary of this conversation."
+        )
+    )
 
     return await run_llm_from_messages(convo)
+
 
 
 async def update_room_summary(
@@ -142,7 +142,6 @@ async def update_room_summary(
 # ─────────────────────────────────────────────
 # Main Orchestrator
 # ─────────────────────────────────────────────
-
 async def handle_llm_request(
     *,
     room_id: int,
@@ -167,19 +166,20 @@ async def handle_llm_request(
             limit=50,
         )
 
-        # 4️⃣ Build conversation context (with usernames)
+        # 4️⃣ Build conversation context (already BaseMessage objects)
         context = build_conversation_context(
             summary=summary,
             messages=recent_messages,
         )
 
-        # 5️⃣ Add current user message (tagged)
-        context.append({
-            "role": "user",
-            "content": f"User({current_username}): {text}",
-        })
+        # 5️⃣ Add current user message (as HumanMessage)
+        context.append(
+            HumanMessage(
+                content=f"User({current_username}): {text}"
+            )
+        )
 
-        # 6️⃣ Generate response
+        # 6️⃣ Generate response (returns string from final AIMessage.content)
         response = await run_llm_from_messages(context)
 
         # 7️⃣ Fire-and-forget background summarization
@@ -191,6 +191,7 @@ async def handle_llm_request(
 
     finally:
         db.close()
+
 
 
 
@@ -229,7 +230,7 @@ async def maybe_update_summary_background(room_id: int):
                 db,
                 room_id,
                 new_summary,
-            )
+            ) 
 
         except Exception:
             import logging

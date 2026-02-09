@@ -10,6 +10,9 @@ class Settings(BaseSettings): #pydantic model for env variable
     algorithm:str
     access_token_expire_minutes:int
     google_api_key:str
+    github_app_id:int
+    github_app_private_key_path:str
+    github_repository:str
     class Config:
         env_file=".env"
     
