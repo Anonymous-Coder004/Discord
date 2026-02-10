@@ -13,6 +13,7 @@ class Settings(BaseSettings): #pydantic model for env variable
     github_app_id:int
     github_app_private_key_path:str
     github_repository:str
+    huggingfacehub_api_token:str
     class Config:
         env_file=".env"
     

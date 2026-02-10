@@ -1,10 +1,15 @@
-from langchain_community.utilities import DuckDuckGoSearchAPIWrapper
 from langchain_community.tools import DuckDuckGoSearchRun
 from langchain_core.tools import tool
 from langchain_community.agent_toolkits.github.toolkit import GitHubToolkit
 from langchain_community.utilities.github import GitHubAPIWrapper
 from app.core.config import settings
 import requests
+from langchain_core.tools import tool
+from app.core.request_context import current_room_id
+from app.db.session import SessionLocal
+from app.services.rag_retriever import retrieve_similar_chunks
+import re
+
 with open(settings.github_app_private_key_path, "r") as f:
     private_key = f.read()
 
@@ -42,8 +47,47 @@ def get_stock_price(symbol: str) -> dict:
     """
     url = f"https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol={symbol}&apikey=FOCXRSDUM6QXQQZ5"
     r = requests.get(url)
-    print("tool called",url)
     return r.json() 
+
+@tool
+def rag_tool(query: str) -> dict:
+    """
+    You MUST use this tool when the user asks about the uploaded PDF.
+    If a PDF exists in the room and the question relates to it,
+    you are required to call this tool before answering.
+    If the PDF does not contain the answer, respond:
+    "I do not know based on the uploaded document."
+
+    """
+
+    room_id = current_room_id.get()
+    if room_id is None:
+        return {"error": "Room context not available"}
+
+    db = SessionLocal()
+    try:
+        chunks = retrieve_similar_chunks(
+            db=db,
+            room_id=room_id,
+            query=query,
+            top_k=3,
+        )
+
+        if not chunks:
+            return {
+                "query": query,
+                "context": [],
+                "message": "No relevant content found."
+            }
+        return {
+            "query": query,
+            "context": [c.content for c in chunks],
+        }
+
+    finally:
+        db.close()
+
+
 
 github = GitHubAPIWrapper(
     github_app_id=settings.github_app_id,
@@ -52,8 +96,6 @@ github = GitHubAPIWrapper(
 )
 github_toolkit = GitHubToolkit.from_github_api_wrapper(github)
 github_tools = github_toolkit.get_tools()
-
-import re
 
 def sanitize_tool_name(name: str) -> str:
     name = name.lower()
@@ -76,4 +118,4 @@ github_tools = [
     t for t in github_tools
     if t.name in ["read_file", "create_file", "update_file","create_pull_request","set_active_branch","create_a_new_branch"]
 ]
-tools = [search_tool,calculator,get_stock_price,*github_tools]
+tools = [rag_tool,search_tool,calculator,get_stock_price,*github_tools]

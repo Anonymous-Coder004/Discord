@@ -13,6 +13,7 @@ from app.agents.prompts.summary_prompts import summarize_prompt
 import asyncio
 from collections import defaultdict
 from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
+from app.core.request_context import current_room_id
 room_locks = defaultdict(asyncio.Lock)
 
 
@@ -152,6 +153,7 @@ async def handle_llm_request(
     db = SessionLocal()
 
     try:
+        current_room_id.set(room_id)
         # 1️⃣ Fetch current user (for identity tagging)
         user = db.get(User, user_id)
         current_username = user.username if user else "Unknown"

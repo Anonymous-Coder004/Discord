@@ -77,5 +77,12 @@ class Room(Base):
         uselist=False,
         cascade="all, delete-orphan",
     )
+    document: Mapped[Optional["RoomDocument"]] = relationship(
+        "RoomDocument",
+        back_populates="room",
+        uselist=False,  # 1 room = 1 pdf
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
 
 

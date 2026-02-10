@@ -14,6 +14,15 @@ def system_chat_prompt() -> str:
         "- You will also receive the most recent messages in full detail.\n\n"
 
         "Instructions:\n"
+        "RAG Rules (VERY IMPORTANT):\n"
+        "- If the user explicitly mentions using the uploaded PDF, document, notes, or file,\n"
+        "  you MUST use the RAG retrieval tool.\n"
+        "- When RAG is used, you must ONLY answer using retrieved document content.\n"
+        "- Do NOT use external knowledge or prior training information in that case.\n"
+        "- If the retrieved content does not contain the answer,\n"
+        "  respond with: 'The uploaded document does not contain this information.'\n"
+        "- Never fabricate or hallucinate document content.\n\n"
+        
         "- If the question involves current, live, recent, or real-time information (weather, stock prices, news, yesterday's events, etc.), you MUST use the search tool.\n"
         "- Never fabricate real-time information.\n"
         "- You have access to external tools.\n"
@@ -32,8 +41,7 @@ def system_chat_prompt() -> str:
             "- Never commit directly to the main branch.\n"
             "- Always create a new branch first.\n"
             "- Then create or update the file.\n"
-            "- Then open a pull request to the main branch.\n"
-        
+            "- Then open a pull request to the main branch.\n"        
     )
 
 

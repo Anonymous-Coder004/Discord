@@ -10,6 +10,7 @@ import ChatInput from "../components/chat/ChatInput";
 import useChatSocket from "../hooks/useChatSocket";
 import { useAuth } from "../context/AuthContext";
 import roomApi from "../api/rooms";
+import uploadApi from "../api/uploadApi";
 import RoomDetailPanel from "../components/RoomDetailPanel";
 const Chat = () => {
   const { user, logout } = useAuth();
@@ -20,6 +21,7 @@ const Chat = () => {
   const [viewMode, setViewMode] = useState("CHAT"); 
   /* ───────────── ROOMS STATE (same as Home) ───────────── */
   const [rooms, setRooms] = useState([]);
+  const [isUploading, setIsUploading] = useState(false);
 
   /* ───────────── FETCH ROOMS ───────────── */
   useEffect(() => {
@@ -100,6 +102,25 @@ const Chat = () => {
     }
   };
 
+  const handleUpload = async (file) => {
+    if (!roomId) return;
+
+    try {
+      setIsUploading(true);
+
+      await uploadApi.uploadPdf(roomId, file);
+
+      // DO NOT add any message manually
+      // Backend will broadcast indexing_started + indexing_completed
+
+    } catch (err) {
+      console.error("Upload failed", err);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+
   return (
     <div className="h-screen flex flex-col bg-gradient-to-br from-black via-slate-900 to-black">
       <Header
@@ -138,7 +159,12 @@ const Chat = () => {
             ))}
           </ChatMessageList>
 
-          <ChatInput onSend={sendMessage} />
+          <ChatInput
+            onSend={sendMessage}
+            onUpload={handleUpload}
+            isUploading={isUploading}
+          />
+
         </div>}
         {viewMode === "JOIN" && (
           <RoomDetailPanel room={selectedRoom} />
