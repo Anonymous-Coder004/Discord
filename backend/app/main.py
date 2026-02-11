@@ -1,19 +1,35 @@
-print("STEP 0: main.py file loading...")
+print("STEP 0: main.py module loading...")
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-print("STEP 1: FastAPI imports done")
+print("STEP 1: FastAPI imported")
 
-from app.core.config import settings
-print("STEP 2: settings imported successfully")
+# ---- SETTINGS ----
+try:
+    from app.core.config import settings
+    print("STEP 2: settings imported successfully")
+except Exception as e:
+    print("ERROR during settings import:", e)
+    raise
 
-from app.api import auth, rooms, pdf
-print("STEP 3: routers imported successfully")
+# ---- ROUTERS ----
+try:
+    from app.api import auth, rooms, pdf
+    print("STEP 3: API routers imported")
+except Exception as e:
+    print("ERROR importing API routers:", e)
+    raise
 
-from app.sockets.router import register_ws_routes
-print("STEP 4: websocket router imported successfully")
+try:
+    from app.sockets.router import register_ws_routes
+    print("STEP 4: WebSocket router imported")
+except Exception as e:
+    print("ERROR importing WebSocket router:", e)
+    raise
 
+
+# ---- APP INIT ----
 app = FastAPI(
     title="Discord-like Chat Platform",
     version="0.1.0",
@@ -21,8 +37,10 @@ app = FastAPI(
     redoc_url="/redoc"
 )
 
-print("STEP 5: FastAPI app instance created")
+print("STEP 5: FastAPI app created")
 
+
+# ---- MIDDLEWARE ----
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -33,35 +51,32 @@ app.add_middleware(
 
 print("STEP 6: CORS middleware added")
 
+
+# ---- HEALTH CHECK ----
 @app.get("/health")
 def health_check():
     return {"status": "ok"}
 
 print("STEP 7: Health route registered")
 
-app.include_router(auth.router)
-print("STEP 8: Auth router registered")
 
-app.include_router(rooms.router)
-print("STEP 9: Rooms router registered")
+# ---- REGISTER ROUTERS ----
+try:
+    app.include_router(auth.router)
+    print("STEP 8: Auth router registered")
 
-app.include_router(pdf.router)
-print("STEP 10: PDF router registered")
+    app.include_router(rooms.router)
+    print("STEP 9: Rooms router registered")
 
-register_ws_routes(app)
-print("STEP 11: WebSocket routes registered")
+    app.include_router(pdf.router)
+    print("STEP 10: PDF router registered")
 
-if __name__ == "__main__":
-    print("STEP 12: Entered __main__ block")
+    register_ws_routes(app)
+    print("STEP 11: WebSocket routes registered")
 
-    import os
-    import uvicorn
+except Exception as e:
+    print("ERROR during router registration:", e)
+    raise
 
-    port = int(os.environ.get("PORT", 8000))
-    print(f"STEP 13: Starting uvicorn on port {port}")
 
-    uvicorn.run(
-        app,
-        host="0.0.0.0",
-        port=port
-    )
+print("STEP 12: main.py fully loaded. Waiting for uvicorn to start...")
