@@ -9,8 +9,8 @@ export default function useChatSocket({ roomId, token }) {
 
     // reset messages when room changes
     setMessages([]);
-
-    const wsUrl = `ws://127.0.0.1:8000/ws/rooms/${roomId}?token=${token}&limit=50`;
+    const WS_BASE = import.meta.env.VITE_WS_BASEURL;
+    const wsUrl = `${WS_BASE}/ws/rooms/${roomId}?token=${token}&limit=50`;
     const socket = new WebSocket(wsUrl);
     socketRef.current = socket;
 

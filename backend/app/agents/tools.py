@@ -10,8 +10,7 @@ from app.db.session import SessionLocal
 from app.services.rag_retriever import retrieve_similar_chunks
 import re
 
-with open(settings.github_app_private_key_path, "r") as f:
-    private_key = f.read()
+private_key=settings.github_app_private_key.replace("\\n","\n")
 
 search_tool = DuckDuckGoSearchRun()
 
