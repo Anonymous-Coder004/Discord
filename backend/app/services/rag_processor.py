@@ -6,13 +6,12 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_huggingface import HuggingFaceEmbeddings
 from app.models.room_document import RoomDocument
 from app.models.document_chunk import DocumentChunk
-from app.services.embedding_service import embedding_model
+from app.services.embedding_service import get_embedding_model
 
 splitter = RecursiveCharacterTextSplitter(
     chunk_size=1000,
     chunk_overlap=200
 )
-
 
 async def process_pdf(
     db: Session,
@@ -54,6 +53,7 @@ async def process_pdf(
     db.refresh(document)
     # 🔥 6️⃣ Generate embeddings
     texts = [chunk.page_content for chunk in chunks]
+    embedding_model=get_embedding_model()
     embeddings = embedding_model.embed_documents(texts)
     # 🔥 7️⃣ Insert chunks
     total = len(chunks)

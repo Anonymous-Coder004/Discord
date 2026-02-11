@@ -4,17 +4,23 @@ from langchain_huggingface import HuggingFaceEmbeddings
 from app.core.config import settings
 import os
 
-if settings.huggingfacehub_api_token:
-    os.environ["HUGGINGFACEHUB_API_TOKEN"]=settings.huggingfacehub_api_token
+_embedding_model = None  # private variable
 
-embedding_model = HuggingFaceEmbeddings(
-    model_name="sentence-transformers/all-MiniLM-L6-v2"
-)
-  
+
+def get_embedding_model():
+    global _embedding_model
+
+    if _embedding_model is None:
+        if settings.huggingfacehub_api_token:
+            os.environ["HUGGINGFACEHUB_API_TOKEN"] = settings.huggingfacehub_api_token
+
+        _embedding_model = HuggingFaceEmbeddings(
+            model_name="sentence-transformers/all-MiniLM-L6-v2"
+        )
+
+    return _embedding_model
+
+
 def embed_text(text: str) -> list[float]:
-    """
-    Convert a string into a 384-dim embedding vector.
-    Used for query embedding during retrieval.
-    """
-    print(text)
-    return embedding_model.embed_query(text)
+    model = get_embedding_model()
+    return model.embed_query(text)

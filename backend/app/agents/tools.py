@@ -4,15 +4,15 @@ from langchain_community.agent_toolkits.github.toolkit import GitHubToolkit
 from langchain_community.utilities.github import GitHubAPIWrapper
 from app.core.config import settings
 import requests
-from langchain_core.tools import tool
 from app.core.request_context import current_room_id
 from app.db.session import SessionLocal
 from app.services.rag_retriever import retrieve_similar_chunks
 import re
 
-private_key=settings.github_app_private_key.replace("\\n","\n")
 
+# 🔹 Safe at import time
 search_tool = DuckDuckGoSearchRun()
+
 
 @tool
 def calculator(first_num: float, second_num: float, operation: str) -> dict:
@@ -33,10 +33,16 @@ def calculator(first_num: float, second_num: float, operation: str) -> dict:
             result = first_num / second_num
         else:
             return {"error": f"Unsupported operation '{operation}'"}
-        
-        return {"first_num": first_num, "second_num": second_num, "operation": operation, "result": result}
+
+        return {
+            "first_num": first_num,
+            "second_num": second_num,
+            "operation": operation,
+            "result": result,
+        }
     except Exception as e:
         return {"error": str(e)}
+
 
 @tool
 def get_stock_price(symbol: str) -> dict:
@@ -46,7 +52,8 @@ def get_stock_price(symbol: str) -> dict:
     """
     url = f"https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol={symbol}&apikey=FOCXRSDUM6QXQQZ5"
     r = requests.get(url)
-    return r.json() 
+    return r.json()
+
 
 @tool
 def rag_tool(query: str) -> dict:
@@ -56,9 +63,7 @@ def rag_tool(query: str) -> dict:
     you are required to call this tool before answering.
     If the PDF does not contain the answer, respond:
     "I do not know based on the uploaded document."
-
     """
-
     room_id = current_room_id.get()
     if room_id is None:
         return {"error": "Room context not available"}
@@ -78,6 +83,7 @@ def rag_tool(query: str) -> dict:
                 "context": [],
                 "message": "No relevant content found."
             }
+
         return {
             "query": query,
             "context": [c.content for c in chunks],
@@ -87,34 +93,61 @@ def rag_tool(query: str) -> dict:
         db.close()
 
 
+# 🔥 -------------------------
+# 🔥 LAZY GITHUB INITIALIZATION
+# 🔥 -------------------------
 
-github = GitHubAPIWrapper(
-    github_app_id=settings.github_app_id,
-    github_app_private_key=private_key,
-    github_repository=settings.github_repository,
-)
-github_toolkit = GitHubToolkit.from_github_api_wrapper(github)
-github_tools = github_toolkit.get_tools()
+_github_tools = None
+
 
 def sanitize_tool_name(name: str) -> str:
     name = name.lower()
-
-    # Replace ANYTHING not allowed with underscore
     name = re.sub(r"[^a-z0-9_.:-]", "_", name)
 
-    # Must start with letter or underscore
     if not re.match(r"^[a-z_]", name):
         name = f"tool_{name}"
 
-    # Trim to 64 chars max
     return name[:64]
 
 
-for tool in github_tools:
-    tool.name = sanitize_tool_name(tool.name)
+def get_github_tools():
+    global _github_tools
 
-github_tools = [
-    t for t in github_tools
-    if t.name in ["read_file", "create_file", "update_file","create_pull_request","set_active_branch","create_a_new_branch"]
-]
-tools = [rag_tool,search_tool,calculator,get_stock_price,*github_tools]
+    if _github_tools is None:
+        private_key = settings.github_app_private_key.replace("\\n", "\n")
+
+        github = GitHubAPIWrapper(
+            github_app_id=settings.github_app_id,
+            github_app_private_key=private_key,
+            github_repository=settings.github_repository,
+        )
+
+        github_toolkit = GitHubToolkit.from_github_api_wrapper(github)
+        tools_list = github_toolkit.get_tools()
+
+        for t in tools_list:
+            t.name = sanitize_tool_name(t.name)
+
+        _github_tools = [
+            t for t in tools_list
+            if t.name in [
+                "read_file",
+                "create_file",
+                "update_file",
+                "create_pull_request",
+                "set_active_branch",
+                "create_a_new_branch"
+            ]
+        ]
+
+    return _github_tools
+
+
+def get_tools():
+    return [
+        rag_tool,
+        search_tool,
+        calculator,
+        get_stock_price,
+        *get_github_tools(),
+    ]

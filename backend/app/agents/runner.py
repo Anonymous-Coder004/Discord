@@ -1,18 +1,26 @@
 from .graph_builder import build_graph
 from langchain_core.messages import AIMessage
-graph = build_graph()
+
+_graph = None
+
+
+def get_graph():
+    global _graph
+    if _graph is None:
+        _graph = build_graph()
+    return _graph
+
 
 async def run_llm_from_messages(messages: list) -> str:
+    graph = get_graph()
+
     result = await graph.ainvoke({"messages": messages})
 
     final_msg = result["messages"][-1]
 
-
-    # If it's AIMessage object
     if isinstance(final_msg, AIMessage):
         content = final_msg.content
 
-        # If content is list (tool-aware models sometimes return blocks)
         if isinstance(content, list):
             text_parts = []
 
@@ -24,5 +32,4 @@ async def run_llm_from_messages(messages: list) -> str:
 
         return content
 
-    # Fallback
     return str(final_msg)
