@@ -5,7 +5,7 @@ const BotAvatar = () => {
                  bg-slate-800
                  border border-slate-600
                  flex items-center justify-center
-                 overflow-hidden"
+                 overflow-hidden shrink-0"
     >
       <img
         src="/brain.png"

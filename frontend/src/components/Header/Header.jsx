@@ -32,7 +32,7 @@ const Header = ({
         </div>
 
         <span className="text-white text-xl font-semibold tracking-wide">
-          Discord
+          Devcord
         </span>
 
         {showHome && (
